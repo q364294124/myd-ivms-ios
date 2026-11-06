@@ -21,13 +21,17 @@ workflows:
       - name: Archive (unsigned)
         script: |
           cd ios
+          set -o pipefail
           xcodebuild archive \
             -workspace MYDIVMS.xcworkspace \
             -scheme MYDIVMS \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/MYDIVMS.xcarchive \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee /tmp/xcb.log | grep -E "error:|FAILED" || true
+          echo "===== 汇总所有编译错误 ====="
+          grep -E "error:" /tmp/xcb.log | sort -u | head -50
+          exit ${PIPESTATUS[0]}
       - name: Package unsigned IPA
         script: |
           mkdir -p ios/build/Payload
