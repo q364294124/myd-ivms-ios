@@ -36,9 +36,8 @@ final class AppState: ObservableObject {
 
     /// 登录后/启动时拉基础数据 + 挂事件流
     func bootstrap() async {
-        async let devs: Void = refreshDevices()
-        async let names: Void = refreshChanNames()
-        _ = (devs, names)
+        await refreshDevices()
+        await refreshChanNames()
         startEventStream()
     }
 
