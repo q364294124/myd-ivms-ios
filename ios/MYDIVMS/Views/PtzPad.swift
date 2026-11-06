@@ -20,7 +20,8 @@ struct PtzPad: View {
                 VStack(spacing: 46) {
                     joystickRow("Up", "UpLeft", "UpRight")
                     HStack(spacing: 46) {
-                        pressBtn("Left", "arrow.left"); zoomBtns.center
+                        pressBtn("Left", "arrow.left")
+                        zoomBtns
                         pressBtn("Right", "arrow.right")
                     }
                     joystickRow("Down", "DownLeft", "DownRight")
