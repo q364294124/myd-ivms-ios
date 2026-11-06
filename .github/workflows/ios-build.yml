@@ -1,0 +1,56 @@
+# MYD-IVMS iOS 客户端 —— GitHub Actions 云构建（macOS runner）
+# push 后自动：xcodegen 生成工程 → pod install → xcodebuild archive →
+# 从 .xcarchive 里取 .app 打包成【未签名 ipa】上传 artifact。
+# 未签名 ipa 用 Sideloadly / AltStore / 企业证书自行签名安装（步骤见 ios/README.md）。
+name: ios-build
+
+on:
+  push:
+    branches: [ main, master ]
+    paths: [ 'ios/**', '.github/workflows/ios-build.yml' ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Generate Xcode project
+        working-directory: ios
+        run: xcodegen generate
+
+      - name: Resolve SPM packages
+        working-directory: ios
+        run: |
+          xcodebuild -resolvePackageDependencies \
+            -project MYDIVMS.xcodeproj -scheme MYDIVMS
+
+      - name: Archive (unsigned)
+        working-directory: ios
+        run: |
+          xcodebuild archive \
+            -project MYDIVMS.xcodeproj \
+            -scheme MYDIVMS \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/MYDIVMS.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p build/Payload
+          cp -R ios/build/MYDIVMS.xcarchive/Products/Applications/MYDIVMS.app build/Payload/
+          cd build
+          zip -qry MYDIVMS-unsigned.ipa Payload
+          ls -lh MYDIVMS-unsigned.ipa
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MYDIVMS-unsigned-ipa
+          path: build/MYDIVMS-unsigned.ipa
+          retention-days: 30
