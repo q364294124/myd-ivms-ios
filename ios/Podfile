@@ -1,0 +1,7 @@
+# MYD-IVMS iOS —— CocoaPods 依赖（MobileVLCKit 官方 spec，替代已失效的 SPM 镜像）
+platform :ios, '16.0'
+
+target 'MYDIVMS' do
+  use_frameworks!
+  pod 'MobileVLCKit'
+end
