@@ -1,7 +1,7 @@
-# MYD-IVMS iOS 未签名 ipa —— Codemagic 云构建（2026-11-05）
-# 为什么用它：GitHub Actions 对未验证账号的 macOS runner 会直接取消；
-# Codemagic 用 GitHub 账号 OAuth 授权登录即可，macOS 构建无此限制，免费额度 500 分钟/月。
-# 在 Codemagic 控制台选仓库 → Workflow 选 "codemagic.yaml" → Start build → 完成后页面右上角下载 MYDIVMS-unsigned.ipa
+# MYD-IVMS iOS 未签名 ipa —— Codemagic 云构建（2026-11-06）
+# 依赖改用 CocoaPods（官方 MobileVLCKit spec；原 SPM 镜像仓库已失效 404）。
+# 流程：brew xcodegen → 生成 .xcodeproj → pod install 生成 .xcworkspace →
+#       xcodebuild -workspace archive（未签名）→ Payload zip 成 ipa → artifacts 下载。
 workflows:
   ios-unsigned:
     name: iOS Unsigned IPA
@@ -13,13 +13,16 @@ workflows:
         script: brew install xcodegen
       - name: Generate Xcode project
         script: cd ios && xcodegen generate
-      - name: Resolve SPM packages (MobileVLCKit)
-        script: cd ios && xcodebuild -resolvePackageDependencies -project MYDIVMS.xcodeproj -scheme MYDIVMS
+      - name: Pod install (MobileVLCKit)
+        script: |
+          cd ios
+          pod install --repo-update
+          ls -lh MYDIVMS.xcworkspace
       - name: Archive (unsigned)
         script: |
           cd ios
           xcodebuild archive \
-            -project MYDIVMS.xcodeproj \
+            -workspace MYDIVMS.xcworkspace \
             -scheme MYDIVMS \
             -configuration Release \
             -destination 'generic/platform=iOS' \
