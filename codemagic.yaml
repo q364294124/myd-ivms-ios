@@ -21,23 +21,39 @@ workflows:
       - name: Archive (unsigned)
         script: |
           cd ios
-          set -o pipefail
           xcodebuild archive \
             -workspace MYDIVMS.xcworkspace \
             -scheme MYDIVMS \
             -configuration Release \
             -destination 'generic/platform=iOS' \
             -archivePath build/MYDIVMS.xcarchive \
-            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO 2>&1 | tee /tmp/xcb.log | grep -E "error:|FAILED" || true
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO > /tmp/xcb.log 2>&1
+          XCODE_EXIT=$?
           echo "===== 汇总所有编译错误 ====="
-          grep -E "error:" /tmp/xcb.log | sort -u | head -50
-          exit ${PIPESTATUS[0]}
+          grep -E "error:" /tmp/xcb.log | sort -u | head -60
+          echo "===== 构建结论 ====="
+          grep -E "FAILED|SUCCEEDED" /tmp/xcb.log | tail -3
+          echo "===== xcodebuild 退出码：$XCODE_EXIT ====="
+          if [ $XCODE_EXIT -ne 0 ]; then
+            echo "❌ 编译失败（见上方 error 汇总）"
+            exit 1
+          fi
       - name: Package unsigned IPA
         script: |
+          if [ ! -d ios/build/MYDIVMS.xcarchive/Products/Applications/MYDIVMS.app ]; then
+            echo "❌ .app 产物不存在——Archive 步骤实际失败了，不能打空包"
+            exit 1
+          fi
           mkdir -p ios/build/Payload
           cp -R ios/build/MYDIVMS.xcarchive/Products/Applications/MYDIVMS.app ios/build/Payload/
           cd ios/build
           zip -qry MYDIVMS-unsigned.ipa Payload
+          SIZE=$(stat -f%z MYDIVMS-unsigned.ipa)
+          echo "ipa 大小：$SIZE 字节"
+          if [ $SIZE -lt 100000 ]; then
+            echo "❌ ipa 过小，打包异常"
+            exit 1
+          fi
           ls -lh MYDIVMS-unsigned.ipa
     artifacts:
       - ios/build/MYDIVMS-unsigned.ipa
