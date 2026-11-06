@@ -12,12 +12,12 @@ workflows:
       - name: Install XcodeGen
         script: brew install xcodegen
       - name: Generate Xcode project
-        script: cd $CM_REPO_DIR/ios && xcodegen generate
+        script: cd $CM_BUILD_DIR/ios && xcodegen generate
       - name: Resolve SPM packages (MobileVLCKit)
-        script: cd $CM_REPO_DIR/ios && xcodebuild -resolvePackageDependencies -project MYDIVMS.xcodeproj -scheme MYDIVMS
+        script: cd $CM_BUILD_DIR/ios && xcodebuild -resolvePackageDependencies -project MYDIVMS.xcodeproj -scheme MYDIVMS
       - name: Archive (unsigned)
         script: |
-          cd $CM_REPO_DIR/ios
+          cd $CM_BUILD_DIR/ios
           xcodebuild archive \
             -project MYDIVMS.xcodeproj \
             -scheme MYDIVMS \
@@ -27,9 +27,9 @@ workflows:
             CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
       - name: Package unsigned IPA
         script: |
-          mkdir -p $CM_REPO_DIR/ios/build/Payload
-          cp -R $CM_REPO_DIR/ios/build/MYDIVMS.xcarchive/Products/Applications/MYDIVMS.app $CM_REPO_DIR/ios/build/Payload/
-          cd $CM_REPO_DIR/ios/build
+          mkdir -p $CM_BUILD_DIR/ios/build/Payload
+          cp -R $CM_BUILD_DIR/ios/build/MYDIVMS.xcarchive/Products/Applications/MYDIVMS.app $CM_BUILD_DIR/ios/build/Payload/
+          cd $CM_BUILD_DIR/ios/build
           zip -qry MYDIVMS-unsigned.ipa Payload
           ls -lh MYDIVMS-unsigned.ipa
     artifacts:
