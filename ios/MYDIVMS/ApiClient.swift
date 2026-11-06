@@ -6,6 +6,7 @@
 //     与 Web 端 toISOString().slice(0,19) 完全一致）；GB 录像/回放时间 = 本地时间。
 
 import Foundation
+import UIKit
 
 final class ApiClient {
     static let shared = ApiClient()
@@ -128,9 +129,10 @@ final class ApiClient {
     /// SDK 回放起播 → FLV 地址
     func sdkPlaybackStart(deviceId: Int, channel: Int, start: Date, end: Date, sub: Int = 1) async throws -> URL {
         struct StartResp: Decodable { let httpFlvUrl: String }
+        struct StartReq: Encodable { let startTime: String; let endTime: String; let subStream: Int }
         let f = ISO8601_utc.string(from: start), e = ISO8601_utc.string(from: end)
         let r = try await post(StartResp.self, "api/playback/\(deviceId)/\(channel)/start",
-                               ["startTime": f, "endTime": e, "subStream": sub])
+                               StartReq(startTime: f, endTime: e, subStream: sub))
         guard let url = URL(string: r.httpFlvUrl) else { throw ApiError.server("回放地址无效") }
         return url
     }
