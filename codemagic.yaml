@@ -1,0 +1,43 @@
+# MYD-IVMS iOS 未签名 ipa —— Codemagic 云构建（2026-11-05）
+# 为什么用它：GitHub Actions 对未验证账号的 macOS runner 会直接取消；
+# Codemagic 用 GitHub 账号 OAuth 授权登录即可，macOS 构建无此限制，免费额度 500 分钟/月。
+# 在 Codemagic 控制台选仓库 → Workflow 选 "codemagic.yaml" → Start build → 完成后页面右上角下载 MYDIVMS-unsigned.ipa
+workflows:
+  ios-unsigned:
+    name: iOS Unsigned IPA
+    max_build_duration: 40
+    environment:
+      xcode: latest
+    scripts:
+      - name: Install XcodeGen
+        script: brew install xcodegen
+      - name: Generate Xcode project
+        script: cd $CM_REPO_DIR/ios && xcodegen generate
+      - name: Resolve SPM packages (MobileVLCKit)
+        script: cd $CM_REPO_DIR/ios && xcodebuild -resolvePackageDependencies -project MYDIVMS.xcodeproj -scheme MYDIVMS
+      - name: Archive (unsigned)
+        script: |
+          cd $CM_REPO_DIR/ios
+          xcodebuild archive \
+            -project MYDIVMS.xcodeproj \
+            -scheme MYDIVMS \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath build/MYDIVMS.xcarchive \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO
+      - name: Package unsigned IPA
+        script: |
+          mkdir -p $CM_REPO_DIR/ios/build/Payload
+          cp -R $CM_REPO_DIR/ios/build/MYDIVMS.xcarchive/Products/Applications/MYDIVMS.app $CM_REPO_DIR/ios/build/Payload/
+          cd $CM_REPO_DIR/ios/build
+          zip -qry MYDIVMS-unsigned.ipa Payload
+          ls -lh MYDIVMS-unsigned.ipa
+    artifacts:
+      - ios/build/MYDIVMS-unsigned.ipa
+    publishing:
+      email:
+        recipients:
+          - q364294124@example.com
+        notify:
+          success: true
+          failure: true
