@@ -1,0 +1,48 @@
+# MYD-IVMS iOS 原生客户端 —— XcodeGen 工程定义（2026-11-05）
+# 本机（Windows）没有 Xcode，工程文件 .xcodeproj 由 XcodeGen 生成：
+#   macOS 上：brew install xcodegen && cd ios && xcodegen && pod install && open MYDIVMS.xcworkspace
+# 或直接用 GitHub Actions 云构建（见 .github/workflows/ios-build.yml）出未签名 ipa。
+name: MYDIVMS
+options:
+  bundleIdPrefix: com.mydivms
+  deploymentTarget:
+    iOS: "16.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    TARGETED_DEVICE_FAMILY: "1,2"          # iPhone + iPad
+    CODE_SIGN_IDENTITY: ""                 # 未签名构建（用户 Sideloadly/AltStore 自签）
+    CODE_SIGNING_REQUIRED: "NO"
+    CODE_SIGNING_ALLOWED: "NO"
+    ENABLE_BITCODE: "NO"
+targets:
+  MYDIVMS:
+    type: application
+    platform: iOS
+    sources:
+      - path: MYDIVMS
+    dependencies:
+      - package: MobileVLCKit
+    info:
+      path: MYDIVMS/Info.plist
+      properties:
+        CFBundleDisplayName: MYD-IVMS
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "1"
+        UILaunchScreen: {}                # 空字典 = 系统纯色启动屏（iPhone 必须，否则上下黑边）
+        UISupportedInterfaceOrientations:
+          - UIInterfaceOrientationPortrait
+          - UIInterfaceOrientationLandscapeLeft
+          - UIInterfaceOrientationLandscapeRight
+        # 平台内网常为 http + IP：ATS 必须放开明文（登录页有提示，建议内网部署 https）
+        NSAppTransportSecurity:
+          NSAllowsArbitraryLoads: true
+        # 后台保活音频（监听对讲/报警音后续用；现阶段防止锁屏即断流提示）
+        UIBackgroundModes:
+          - audio
+        NSLocalNetworkUsageDescription: "连接局域网内的视频监控服务器与设备"
+packages:
+  MobileVLCKit:
+    url: https://github.com/mxklb/MobileVLCKit-SPM.git
+    from: 3.3.10
