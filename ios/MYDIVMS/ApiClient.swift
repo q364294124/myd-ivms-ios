@@ -83,7 +83,7 @@ final class ApiClient {
 
     private func send<T: Decodable>(_ type: T.Type, _ req: URLRequest) async throws -> T {
         let (data, resp) = try await session.data(for: req)
-        guard let http = resp as? HTTPURLResponse else throw ApiError.network("非 HTTP 响应")
+        guard let http = resp as? HTTPURLResponse else { throw ApiError.network("非 HTTP 响应") }
         guard (200..<300).contains(http.statusCode) else {
             if http.statusCode == 401 { logout(); throw ApiError.unauthorized }
             if let err = try? decoder.decode(ApiErrorBody.self, from: data) {
