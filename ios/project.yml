@@ -22,8 +22,6 @@ targets:
     platform: iOS
     sources:
       - path: MYDIVMS
-    dependencies:
-      - package: MobileVLCKit
     info:
       path: MYDIVMS/Info.plist
       properties:
@@ -42,7 +40,3 @@ targets:
         UIBackgroundModes:
           - audio
         NSLocalNetworkUsageDescription: "连接局域网内的视频监控服务器与设备"
-packages:
-  MobileVLCKit:
-    url: https://github.com/mxklb/MobileVLCKit-SPM.git
-    from: 3.3.10
